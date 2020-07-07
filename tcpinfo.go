@@ -1,7 +1,9 @@
+// +build linux
+
 package tcpinfo
 
 import (
-	"errors"
+	"fmt"
 	"net"
 	"syscall"
 	"unsafe"
@@ -9,31 +11,24 @@ import (
 
 type TCPInfo syscall.TCPInfo
 
-func getsockopt(s int, level int, name int, val uintptr, vallen *uint32) (err error) {
-	_, _, e1 := syscall.Syscall6(syscall.SYS_GETSOCKOPT, uintptr(s), uintptr(level), uintptr(name), uintptr(val), uintptr(unsafe.Pointer(vallen)), 0)
-	if e1 != 0 {
-		err = e1
-	}
-	return
-}
-
-func GetsockoptTCPInfo(conn *net.Conn) (*TCPInfo, error) {
-	tcpConn, ok := (*conn).(*net.TCPConn)
-	if !ok {
-		return nil, errors.New("not a TCPConn")
+func GetsockoptTCPInfo(tcpConn *net.TCPConn) (*TCPInfo, error) {
+	if tcpConn == nil {
+		return nil, fmt.Errorf("tcp conn is nil")
 	}
 
 	file, err := tcpConn.File()
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	fd := file.Fd()
 	tcpInfo := TCPInfo{}
-	size := uint32(unsafe.Sizeof(tcpInfo))
-	err = getsockopt(int(fd), syscall.SOL_TCP, syscall.TCP_INFO, uintptr(unsafe.Pointer(&tcpInfo)), &size)
-	if err != nil {
-		return nil, err
+	size := unsafe.Sizeof(tcpInfo)
+	_, _, errno := syscall.Syscall6(syscall.SYS_GETSOCKOPT, fd, syscall.SOL_TCP, syscall.TCP_INFO,
+		uintptr(unsafe.Pointer(&tcpInfo)), uintptr(unsafe.Pointer(&size)), 0)
+	if errno != 0 {
+		return nil, fmt.Errorf("syscall failed. errno=%d", errno)
 	}
 
 	return &tcpInfo, nil

@@ -17,11 +17,12 @@ if err != nil {
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
-	"fmt"
 	"net"
 	"sync"
+
 	"github.com/brucespang/go-tcpinfo"
 )
 
@@ -30,14 +31,14 @@ func handleConn(conn net.Conn) {
 }
 
 func server(wg *sync.WaitGroup) {
-  ln,err := net.Listen("tcp", ":8000")
+	ln, err := net.Listen("tcp", ":8000")
 	if err != nil {
 		panic(err)
 	}
 
 	wg.Done()
 
-  // accept connection on port
+	// accept connection on port
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -56,12 +57,12 @@ func client() {
 
 	go io.Copy(ioutil.Discard, conn)
 
-	_,err = conn.Write([]byte("hihihihihihihi"))
+	_, err = conn.Write([]byte("hihihihihihihi"))
 	if err != nil {
 		panic(err)
 	}
 
-	tcpInfo, err := tcpinfo.GetsockoptTCPInfo(&conn)
+	tcpInfo, err := tcpinfo.GetsockoptTCPInfo(conn.(*net.TCPConn))
 	if err != nil {
 		panic(err)
 	}
@@ -75,5 +76,6 @@ func main() {
 	wg.Wait()
 	client()
 }
+
 
 ```
