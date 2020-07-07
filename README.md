@@ -1,5 +1,7 @@
 # go-tcpinfo
 
+[![Build Status](https://travis-ci.org/brucespang/go-tcpinfo.svg?branch=master)](https://travis-ci.org/brucespang/go-tcpinfo)
+
 This is a small wrapper around the syscall library, so you don't have to mess around with it whenever you want to get tcp info for a connection
 
 ## Usage
